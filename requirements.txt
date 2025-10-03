@@ -9,7 +9,8 @@ matplotlib
 seaborn
 folium
 streamlit-folium
-gdown
+
+
 
 
 
