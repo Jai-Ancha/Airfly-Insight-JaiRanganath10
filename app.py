@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import folium
 from streamlit_folium import st_folium
-import gdown
 
 # --------------------------
 # Page Config
@@ -14,43 +13,43 @@ import gdown
 st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 
 # --------------------------
-# Load Data
+# Load Data from Kaggle
 # --------------------------
+from kaggle.api.kaggle_api_extended import KaggleApi
+import os
+
 @st.cache_data
 def load_data():
-    # Google Drive direct download link
-    url = "https://drive.google.com/uc?export=download&id=1WQcFOct-jLjxDgzig3joliyENoXRxEND"
-    output = "flights_cleaned.csv"
+    dataset_name = "anchajairanganath/flights-cleaned"
+    output_file = "flights_cleaned.csv"
 
-    # Download file if not present
-    gdown.download(url, output, quiet=False)
+    # Only download if not already present
+    if not os.path.exists(output_file):
+        api = KaggleApi()
+        api.authenticate()  # Uses Streamlit secrets: KAGGLE_USERNAME & KAGGLE_KEY
+        api.dataset_download_file(dataset_name, file_name="flights_cleaned.csv", path=".", unzip=True)
 
-    # Read CSV
-    df = pd.read_csv(output)
-    
-    # Convert FL_DATE safely
+    df = pd.read_csv(output_file)
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
-    
-    # Add extra columns
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
     df["WeekdayName"] = df["FL_DATE"].dt.day_name()
-    df["DepHour"] = pd.to_datetime(df["DEP_TIME"], format='%H%M', errors='coerce').dt.hour
     df["Route"] = df["ORIGIN"] + " → " + df["DEST"]
     df["CityPair"] = df["ORIGIN_CITY"] + " → " + df["DEST_CITY"]
-    
     return df
 
 df = load_data()
 
 # --------------------------
-# Sidebar Filters
+# Sidebar
 # --------------------------
 st.sidebar.title("AirFly Dashboard")
 
+# Global filters
 airlines = st.sidebar.multiselect("Airline", sorted(df['AIRLINE'].unique()))
-years = st.sidebar.multiselect("Year", sorted(df['Year'].dropna().unique()))
+years = st.sidebar.multiselect("Year", sorted(df['Year'].unique()))
 
+# Apply filters
 df_filtered = df.copy()
 if airlines:
     df_filtered = df_filtered[df_filtered['AIRLINE'].isin(airlines)]
@@ -139,7 +138,8 @@ elif page == "Delays & Cancellations":
     # Monthly Cancellation Rate
     monthly_cancel = df_filtered.groupby("Month")['CANCELLED'].mean() * 100
     fig5, ax = plt.subplots(figsize=(8,4))
-    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color=st.get_option("theme.primaryColor"))
+    color = 'orange' if st.get_option("theme.base") == "light" else 'yellow'
+    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color=color)
     ax.set_title("Monthly Cancellation Rate (%)")
     ax.set_xlabel("Month")
     ax.set_ylabel("Cancellation Rate %")
@@ -180,4 +180,3 @@ elif page == "Route Performance":
     sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
     st.pyplot(fig8)
-
