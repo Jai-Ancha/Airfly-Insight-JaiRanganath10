@@ -6,27 +6,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import folium
 from streamlit_folium import st_folium
-
-# --------------------------
-# Page Config
-# --------------------------
-st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
-
-# --------------------------
-# Load Data from Kaggle
-# --------------------------
 from kaggle.api.kaggle_api_extended import KaggleApi
 import os
+
+# Page Config
+st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 
 @st.cache_data
 def load_data():
     dataset_name = "anchajairanganath/flights-cleaned"
     output_file = "flights_cleaned.csv"
 
-    # Only download if not already present
     if not os.path.exists(output_file):
         api = KaggleApi()
-        api.authenticate()  # Uses Streamlit secrets: KAGGLE_USERNAME & KAGGLE_KEY
+        api.authenticate()
         
         # --- THIS IS THE CORRECTED LINE ---
         api.dataset_download_files(dataset_name, path=".", unzip=True)
@@ -42,16 +35,11 @@ def load_data():
 
 df = load_data()
 
-# --------------------------
 # Sidebar
-# --------------------------
 st.sidebar.title("AirFly Dashboard")
-
-# Global filters
 airlines = st.sidebar.multiselect("Airline", sorted(df['AIRLINE'].unique()))
 years = st.sidebar.multiselect("Year", sorted(df['Year'].unique()))
 
-# Apply filters
 df_filtered = df.copy()
 if airlines:
     df_filtered = df_filtered[df_filtered['AIRLINE'].isin(airlines)]
@@ -60,21 +48,16 @@ if years:
 
 page = st.sidebar.radio("Go To:", ["Overview", "Delays & Cancellations", "Route Performance"])
 
-# --------------------------
-# PAGE 1: Overview
-# --------------------------
+# Page 1: Overview
 if page == "Overview":
     st.title("✈️ Airline Operations Overview")
-
-    # KPIs
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Flights", f"{df_filtered['FL_NUMBER'].count():,}")
     col2.metric("Unique Airlines", df_filtered['AIRLINE'].nunique())
     col3.metric("Unique Routes", df_filtered['Route'].nunique())
     col4.metric("Unique Airports", df_filtered['ORIGIN'].nunique())
-
     st.markdown("---")
-
+    # ... (the rest of your code is the same and correct)
     # Top Airlines
     top_airlines = df_filtered['AIRLINE'].value_counts().head(10).reset_index()
     top_airlines.columns = ['AIRLINE','count']
@@ -123,21 +106,15 @@ if page == "Overview":
             ).add_to(m)
     st_folium(m, width=700, height=500)
 
-# --------------------------
-# PAGE 2: Delays & Cancellations
-# --------------------------
+# Page 2: Delays & Cancellations
 elif page == "Delays & Cancellations":
     st.title("⏱️ Delay & Cancellation Insights")
-
-    # Avg Delay by Airline
+    # ... (the rest of your code is the same and correct)
     avg_delay = df_filtered.groupby("AIRLINE")['ARR_DELAY'].mean().reset_index()
     fig4 = px.bar(avg_delay, x='AIRLINE', y='ARR_DELAY',
                   title="Average Arrival Delay by Airline", color='ARR_DELAY', color_continuous_scale="Reds")
     st.plotly_chart(fig4, use_container_width=True)
-
     st.markdown("---")
-
-    # Monthly Cancellation Rate
     monthly_cancel = df_filtered.groupby("Month")['CANCELLED'].mean() * 100
     fig5, ax = plt.subplots(figsize=(8,4))
     color = 'orange' if st.get_option("theme.base") == "light" else 'yellow'
@@ -146,8 +123,6 @@ elif page == "Delays & Cancellations":
     ax.set_xlabel("Month")
     ax.set_ylabel("Cancellation Rate %")
     st.pyplot(fig5)
-
-    # Cancellation Reasons
     cancelled = df_filtered[df_filtered['CANCELLED'] == 1].copy()
     reason_map = {'A': 'Carrier', 'B': 'Weather', 'C': 'NAS', 'D': 'Security'}
     cancelled['Reason'] = cancelled['CANCELLATION_CODE'].map(reason_map)
@@ -157,27 +132,20 @@ elif page == "Delays & Cancellations":
     ax.set_title("Cancellation Reasons Breakdown")
     st.pyplot(fig6)
 
-# --------------------------
-# PAGE 3: Route Performance
-# --------------------------
+# Page 3: Route Performance
 elif page == "Route Performance":
     st.title("🛫 Route & Airport Performance")
-
-    # Congested Routes
+    # ... (the rest of your code is the same and correct)
     top_routes = df_filtered['Route'].value_counts().head(10).reset_index()
     top_routes.columns = ['Route','count']
     fig7 = px.bar(top_routes, x='count', y='Route', orientation='h',
                   title="Top 10 Congested Routes", color='count', color_continuous_scale="Viridis")
     st.plotly_chart(fig7, use_container_width=True)
-
     st.markdown("---")
-
-    # Heatmap of Delays
     st.subheader("Route Delay Heatmap (Top 20 Routes)")
     top_20 = df_filtered['Route'].value_counts().head(20).index
     df_top = df_filtered[df_filtered['Route'].isin(top_20)]
     delay_matrix = df_top.pivot_table(index='ORIGIN', columns='DEST', values='ARR_DELAY', aggfunc='mean')
-
     fig8, ax = plt.subplots(figsize=(10,6))
     sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
