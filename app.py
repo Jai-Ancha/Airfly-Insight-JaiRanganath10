@@ -1,6 +1,3 @@
-import os
-st.write("Current working dir:", os.getcwd())
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -170,6 +167,7 @@ elif page == "Route Performance":
     sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
     st.pyplot(fig8)
+
 
 
 
