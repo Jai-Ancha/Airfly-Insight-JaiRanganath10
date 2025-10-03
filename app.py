@@ -15,7 +15,6 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 @st.cache_data
 def load_data():
     dataset_name = "anchajairanganath/flights-cleaned"
-    # This points to your NEW 25% sample file
     output_file = "flights_cleaned_sample_25pct.parquet"
 
     if not os.path.exists(output_file):
@@ -24,10 +23,8 @@ def load_data():
         
         api.dataset_download_files(dataset_name, path=".", unzip=True)
 
-    # Reads the efficient Parquet file
     df = pd.read_parquet(output_file) 
     
-    # The rest of your code stays exactly the same
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
@@ -38,7 +35,6 @@ def load_data():
 
 df = load_data()
 
-# --- All the rest of your dashboard code is the same ---
 # Sidebar
 st.sidebar.title("AirFly Dashboard")
 airlines = st.sidebar.multiselect("Airline", sorted(df['AIRLINE'].unique()))
@@ -108,20 +104,26 @@ elif page == "Delays & Cancellations":
                   title="Average Arrival Delay by Airline", color='ARR_DELAY', color_continuous_scale="Reds")
     st.plotly_chart(fig4, use_container_width=True)
     st.markdown("---")
+    
+    # Monthly Cancellation Rate
     monthly_cancel = df_filtered.groupby("Month")['CANCELLED'].mean() * 100
     fig5, ax = plt.subplots(figsize=(8,4))
-    color = 'orange' if st.get_option("theme.base") == "light" else 'yellow'
-    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color=color)
+    # UPDATED: Use a modern blue color and slightly thicker line
+    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color='#1f77b4', linewidth=2)
     ax.set_title("Monthly Cancellation Rate (%)")
     ax.set_xlabel("Month")
     ax.set_ylabel("Cancellation Rate %")
     st.pyplot(fig5)
+
+    # Cancellation Reasons
     cancelled = df_filtered[df_filtered['CANCELLED'] == 1].copy()
     reason_map = {'A': 'Carrier', 'B': 'Weather', 'C': 'NAS', 'D': 'Security'}
     cancelled['Reason'] = cancelled['CANCELLATION_CODE'].map(reason_map)
     pie_counts = cancelled['Reason'].value_counts()
     fig6, ax = plt.subplots()
-    ax.pie(pie_counts, labels=pie_counts.index, autopct='%1.1f%%', startangle=90)
+    # UPDATED: Generate a color palette from the 'Blues' colormap
+    colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.8, len(pie_counts)))
+    ax.pie(pie_counts, labels=pie_counts.index, autopct='%1.1f%%', startangle=90, colors=colors)
     ax.set_title("Cancellation Reasons Breakdown")
     st.pyplot(fig6)
 
@@ -134,11 +136,13 @@ elif page == "Route Performance":
                   title="Top 10 Congested Routes", color='count', color_continuous_scale="Viridis")
     st.plotly_chart(fig7, use_container_width=True)
     st.markdown("---")
+    
     st.subheader("Route Delay Heatmap (Top 20 Routes)")
     top_20 = df_filtered['Route'].value_counts().head(20).index
     df_top = df_filtered[df_filtered['Route'].isin(top_20)]
     delay_matrix = df_top.pivot_table(index='ORIGIN', columns='DEST', values='ARR_DELAY', aggfunc='mean')
     fig8, ax = plt.subplots(figsize=(10,6))
-    sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
+    # UPDATED: Use the 'viridis' colormap for a modern look
+    sns.heatmap(delay_matrix, cmap='viridis', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
     st.pyplot(fig8)
