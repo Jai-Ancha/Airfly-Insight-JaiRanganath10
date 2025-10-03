@@ -18,12 +18,27 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 @st.cache_data
 def load_data():
     url = "https://drive.google.com/uc?export=download&id=1WQcFOct-jLjxDgzig3joliyENoXRxEND"
-    df = pd.read_csv(url, parse_dates=["FL_DATE"])
-    df["Year"] = df["FL_DATE"].dt.year
-    df["Month"] = df["FL_DATE"].dt.month
-    df["WeekdayName"] = df["FL_DATE"].dt.day_name()
-    df["Route"] = df["ORIGIN"] + " → " + df["DEST"]
-    df["CityPair"] = df["ORIGIN_CITY"] + " → " + df["DEST_CITY"]
+    df = pd.read_csv(url)
+
+    # Debug: Show available columns in Streamlit (remove later if not needed)
+    st.write("✅ Columns in dataset:", df.columns.tolist())
+
+    # Ensure FL_DATE column exists
+    if "FL_DATE" in df.columns:
+        df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
+        df["Year"] = df["FL_DATE"].dt.year
+        df["Month"] = df["FL_DATE"].dt.month
+        df["WeekdayName"] = df["FL_DATE"].dt.day_name()
+    else:
+        st.error("❌ 'FL_DATE' column not found in dataset. Please check CSV.")
+        st.stop()
+
+    # Extra columns
+    if "ORIGIN" in df.columns and "DEST" in df.columns:
+        df["Route"] = df["ORIGIN"] + " → " + df["DEST"]
+    if "ORIGIN_CITY" in df.columns and "DEST_CITY" in df.columns:
+        df["CityPair"] = df["ORIGIN_CITY"] + " → " + df["DEST_CITY"]
+
     return df
 
 
@@ -168,4 +183,5 @@ elif page == "Route Performance":
     sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
     st.pyplot(fig8)
+
 
