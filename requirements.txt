@@ -8,6 +8,8 @@ seaborn
 folium
 streamlit-folium
 kaggle
+pyarrow
+
 
 
 
