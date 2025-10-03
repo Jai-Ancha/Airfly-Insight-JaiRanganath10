@@ -15,16 +15,19 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 @st.cache_data
 def load_data():
     dataset_name = "anchajairanganath/flights-cleaned"
-    output_file = "flights_cleaned.csv"
+    # This now points to your new Parquet file
+    output_file = "flights_cleaned.parquet"
 
     if not os.path.exists(output_file):
         api = KaggleApi()
         api.authenticate()
         
-        # --- THIS IS THE CORRECTED LINE ---
         api.dataset_download_files(dataset_name, path=".", unzip=True)
 
-    df = pd.read_csv(output_file)
+    # This now uses the correct function to read the Parquet file
+    df = pd.read_parquet(output_file) 
+    
+    # The rest of your data processing is the same
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
@@ -57,31 +60,22 @@ if page == "Overview":
     col3.metric("Unique Routes", df_filtered['Route'].nunique())
     col4.metric("Unique Airports", df_filtered['ORIGIN'].nunique())
     st.markdown("---")
-    # ... (the rest of your code is the same and correct)
-    # Top Airlines
     top_airlines = df_filtered['AIRLINE'].value_counts().head(10).reset_index()
     top_airlines.columns = ['AIRLINE','count']
     fig1 = px.bar(top_airlines, x='count', y='AIRLINE', orientation='h',
                   title="Top 10 Airlines by Flight Count", color='count', color_continuous_scale="Blues")
     st.plotly_chart(fig1, use_container_width=True)
-
-    # Top Routes
     top_routes = df_filtered['Route'].value_counts().head(10).reset_index()
     top_routes.columns = ['Route','count']
     fig2 = px.bar(top_routes, x='count', y='Route', orientation='h',
                   title="Top 10 Busiest Routes", color='count', color_continuous_scale="Oranges")
     st.plotly_chart(fig2, use_container_width=True)
-
-    # Monthly Flight Trend
     monthly = df_filtered.groupby('Month')['FL_NUMBER'].count()
     fig3 = px.line(x=monthly.index, y=monthly.values, markers=True,
                    title="Monthly Flight Trend")
     fig3.update_layout(xaxis_title="Month", yaxis_title="Flights")
     st.plotly_chart(fig3, use_container_width=True)
-
     st.markdown("---")
-
-    # Folium Map
     st.subheader("Top Airports by Traffic (Map)")
     airport_locations = {
         'ATL': (33.6407, -84.4277), 'DFW': (32.8998, -97.0403), 'ORD': (41.9742, -87.9073),
@@ -91,7 +85,6 @@ if page == "Overview":
     }
     busiest_airports = df_filtered['ORIGIN'].value_counts().head(10).index
     avg_delays = df_filtered.groupby('ORIGIN')['ARR_DELAY'].mean()
-
     m = folium.Map(location=[39.8, -98.5], zoom_start=4)
     for airport in busiest_airports:
         if airport in airport_locations:
@@ -109,7 +102,6 @@ if page == "Overview":
 # Page 2: Delays & Cancellations
 elif page == "Delays & Cancellations":
     st.title("⏱️ Delay & Cancellation Insights")
-    # ... (the rest of your code is the same and correct)
     avg_delay = df_filtered.groupby("AIRLINE")['ARR_DELAY'].mean().reset_index()
     fig4 = px.bar(avg_delay, x='AIRLINE', y='ARR_DELAY',
                   title="Average Arrival Delay by Airline", color='ARR_DELAY', color_continuous_scale="Reds")
@@ -135,7 +127,6 @@ elif page == "Delays & Cancellations":
 # Page 3: Route Performance
 elif page == "Route Performance":
     st.title("🛫 Route & Airport Performance")
-    # ... (the rest of your code is the same and correct)
     top_routes = df_filtered['Route'].value_counts().head(10).reset_index()
     top_routes.columns = ['Route','count']
     fig7 = px.bar(top_routes, x='count', y='Route', orientation='h',
