@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import folium
 from streamlit_folium import st_folium
+import gdown
 
 # --------------------------
 # Page Config
@@ -14,14 +15,23 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 
 # --------------------------
 # Load Data
+# --------------------------
 @st.cache_data
 def load_data():
-    url = "https://drive.google.com/uc?id=1WQcFOct-jLjxDgzig3joliyENoXRxEND"
-    df = pd.read_csv(url)
+    # Google Drive file ID
+    file_id = "1WQcFOct-jLjxDgzig3joliyENoXRxEND"
+    url = f"https://drive.google.com/uc?id={file_id}"
+    output = "flights_cleaned.csv"
+
+    # Download only if not present
+    gdown.download(url, output, quiet=False)
+
+    df = pd.read_csv(output)
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
     df["WeekdayName"] = df["FL_DATE"].dt.day_name()
+    df["DepHour"] = pd.to_datetime(df["CRS_DEP_TIME"], format='%H%M', errors='coerce').dt.hour
     df["Route"] = df["ORIGIN"] + " → " + df["DEST"]
     df["CityPair"] = df["ORIGIN_CITY"] + " → " + df["DEST_CITY"]
     return df
@@ -126,7 +136,8 @@ elif page == "Delays & Cancellations":
     # Monthly Cancellation Rate
     monthly_cancel = df_filtered.groupby("Month")['CANCELLED'].mean() * 100
     fig5, ax = plt.subplots(figsize=(8,4))
-    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color='red')
+    color = st.get_option("theme.primaryColor")  # Theme-aware
+    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color=color)
     ax.set_title("Monthly Cancellation Rate (%)")
     ax.set_xlabel("Month")
     ax.set_ylabel("Cancellation Rate %")
@@ -167,9 +178,4 @@ elif page == "Route Performance":
     sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
     st.pyplot(fig8)
-
-
-
-
-
 
