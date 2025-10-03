@@ -1,31 +1,56 @@
-# ✈️ AirFly Insights Dashboard
+# ✈️ Flight Dashboard – Streamlit App
 
-**AirFly Insights Dashboard** is an interactive Streamlit app for analyzing airline operations, delays, cancellations, and route performance using real flight data. The dashboard provides actionable insights via interactive visualizations and maps.
+This is an interactive Streamlit dashboard for analyzing flight data.  
+It provides visual insights with filters (airline, year, source, destination, etc.) across multiple pages.
 
 ---
 
 ## 🚀 Features
+- 📊 Multi-page dashboard (Overview, Delays & Cancellations, Route Performance)
+- 🔍 Filter by Airline, Year, Source, Destination
+- 🗂️ Large dataset (flights_cleaned.csv ~ 700MB)
+- ⚡ Data caching with `st.cache_data` for faster reloads
+- ☁️ Hosted on Streamlit Cloud
 
-- **Overview**
-  - Total Flights, Unique Airlines, Routes, and Airports
-  - Top 10 Airlines by Flight Count
-  - Top 10 Busiest Routes
-  - Monthly Flight Trends
-  - Top Airports by Traffic (Interactive Map)
+---
 
-- **Delays & Cancellations**
-  - Average Arrival Delay by Airline
-  - Monthly Cancellation Rate
-  - Cancellation Reasons Breakdown
+## 🛠️ Tech Stack
+- Python 3.x
+- [Streamlit](https://streamlit.io/)
+- Pandas & NumPy
+- Plotly, Matplotlib, Seaborn
+- Folium & streamlit-folium
 
-- **Route Performance**
-  - Top 10 Congested Routes
-  - Heatmap of Average Arrival Delays (Top 20 Routes)
+---
 
-- **Filters**
-  - Multi-select Airline filter
-  - Multi-select Year filter
-  - Page navigation: Overview / Delays & Cancellations / Route Performance
+## 📂 Dataset
+- Original dataset stored in **Google Drive** (public link, auto-loaded in app).  
+- No need to keep dataset in GitHub repo.
+
+---
+
+## 📌 Pages & Visualizations
+
+### Overview
+- Total Flights, Unique Airlines, Routes, and Airports
+- Top 10 Airlines by Flight Count
+- Top 10 Busiest Routes
+- Monthly Flight Trends
+- Top Airports by Traffic (Interactive Map)
+
+### Delays & Cancellations
+- Average Arrival Delay by Airline
+- Monthly Cancellation Rate
+- Cancellation Reasons Breakdown
+
+### Route Performance
+- Top 10 Congested Routes
+- Heatmap of Average Arrival Delays (Top 20 Routes)
+
+### Filters
+- Multi-select Airline filter
+- Multi-select Year filter
+- Page navigation: Overview / Delays & Cancellations / Route Performance
 
 ---
 
@@ -44,24 +69,11 @@ The dashboard includes **9 interactive visualizations**:
 
 ---
 
-##  Tech Stack
-
-- Python 3.x  
-- [Streamlit](https://streamlit.io/)  
-- Pandas & NumPy  
-- Plotly, Matplotlib, Seaborn  
-- Folium & streamlit-folium  
-
----
-
-## Installation
+## Installation & Run Locally
 
 1. Clone the repository:
 ```bash
 git clone <your-repo-url>
 cd airfly-dashboard
-
-
-## Run the App
-pip install streamlit plotly pandas numpy matplotlib seaborn folium streamlit-folium
+pip install -r requirements.txt
 streamlit run app.py
