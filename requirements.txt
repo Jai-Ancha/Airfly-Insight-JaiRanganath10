@@ -1,13 +1,15 @@
 
 ##Python Libraries
 
-gdown>=4.6.0
-streamlit>=1.25.0
-pandas>=2.0.0
-numpy>=1.25.0
-plotly>=6.0.0
-matplotlib>=3.7.0
-seaborn>=0.13.0
-folium>=0.16.0
-streamlit-folium>=0.11.0
+streamlit
+pandas
+numpy
+plotly
+matplotlib
+seaborn
+folium
+streamlit-folium
+gdown
+
+
 
