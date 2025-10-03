@@ -18,36 +18,39 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 # --------------------------
 @st.cache_data
 def load_data():
-    # Google Drive file ID
-    file_id = "1WQcFOct-jLjxDgzig3joliyENoXRxEND"
-    url = f"https://drive.google.com/uc?id={file_id}"
+    # Google Drive direct download link
+    url = "https://drive.google.com/uc?export=download&id=1WQcFOct-jLjxDgzig3joliyENoXRxEND"
     output = "flights_cleaned.csv"
 
-    # Download only if not present
+    # Download file if not present
     gdown.download(url, output, quiet=False)
 
+    # Read CSV
     df = pd.read_csv(output)
+    
+    # Convert FL_DATE safely
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
+    
+    # Add extra columns
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
     df["WeekdayName"] = df["FL_DATE"].dt.day_name()
-    df["DepHour"] = pd.to_datetime(df["CRS_DEP_TIME"], format='%H%M', errors='coerce').dt.hour
+    df["DepHour"] = pd.to_datetime(df["DEP_TIME"], format='%H%M', errors='coerce').dt.hour
     df["Route"] = df["ORIGIN"] + " → " + df["DEST"]
     df["CityPair"] = df["ORIGIN_CITY"] + " → " + df["DEST_CITY"]
+    
     return df
 
 df = load_data()
 
 # --------------------------
-# Sidebar
+# Sidebar Filters
 # --------------------------
 st.sidebar.title("AirFly Dashboard")
 
-# Global filters
 airlines = st.sidebar.multiselect("Airline", sorted(df['AIRLINE'].unique()))
-years = st.sidebar.multiselect("Year", sorted(df['Year'].unique()))
+years = st.sidebar.multiselect("Year", sorted(df['Year'].dropna().unique()))
 
-# Apply filters
 df_filtered = df.copy()
 if airlines:
     df_filtered = df_filtered[df_filtered['AIRLINE'].isin(airlines)]
@@ -136,8 +139,7 @@ elif page == "Delays & Cancellations":
     # Monthly Cancellation Rate
     monthly_cancel = df_filtered.groupby("Month")['CANCELLED'].mean() * 100
     fig5, ax = plt.subplots(figsize=(8,4))
-    color = st.get_option("theme.primaryColor")  # Theme-aware
-    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color=color)
+    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color=st.get_option("theme.primaryColor"))
     ax.set_title("Monthly Cancellation Rate (%)")
     ax.set_xlabel("Month")
     ax.set_ylabel("Cancellation Rate %")
