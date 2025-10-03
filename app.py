@@ -27,7 +27,9 @@ def load_data():
     if not os.path.exists(output_file):
         api = KaggleApi()
         api.authenticate()  # Uses Streamlit secrets: KAGGLE_USERNAME & KAGGLE_KEY
-        api.dataset_download_file(dataset_name, file_name="flights_cleaned.csv", path=".", unzip=True)
+        
+        # --- THIS IS THE CORRECTED LINE ---
+        api.dataset_download_files(dataset_name, path=".", unzip=True)
 
     df = pd.read_csv(output_file)
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
