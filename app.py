@@ -17,13 +17,15 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 # --------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("flights_cleaned.csv", parse_dates=["FL_DATE"])
+    url = "https://drive.google.com/uc?export=download&id=1WQcFOct-jLjxDgzig3joliyENoXRxEND"
+    df = pd.read_csv(url, parse_dates=["FL_DATE"])
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
     df["WeekdayName"] = df["FL_DATE"].dt.day_name()
     df["Route"] = df["ORIGIN"] + " → " + df["DEST"]
     df["CityPair"] = df["ORIGIN_CITY"] + " → " + df["DEST_CITY"]
     return df
+
 
 df = load_data()
 
@@ -166,3 +168,4 @@ elif page == "Route Performance":
     sns.heatmap(delay_matrix, cmap='YlOrRd', annot=True, fmt=".1f", linewidths=.5, ax=ax)
     ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
     st.pyplot(fig8)
+
