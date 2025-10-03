@@ -35,7 +35,7 @@ def load_data():
 
 df = load_data()
 
-# Sidebar
+# --- Sidebar ---
 st.sidebar.title("AirFly Dashboard")
 airlines = st.sidebar.multiselect("Airline", sorted(df['AIRLINE'].unique()))
 years = st.sidebar.multiselect("Year", sorted(df['Year'].unique()))
@@ -48,9 +48,10 @@ if years:
 
 page = st.sidebar.radio("Go To:", ["Overview", "Delays & Cancellations", "Route Performance"])
 
-# Page 1: Overview
+# --- Page 1: Overview ---
 if page == "Overview":
     st.title("✈️ Airline Operations Overview")
+    # ... (This page uses Plotly and Folium, which already look good) ...
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Flights", f"{df_filtered['FL_NUMBER'].count():,}")
     col2.metric("Unique Airlines", df_filtered['AIRLINE'].nunique())
@@ -74,12 +75,8 @@ if page == "Overview":
     st.plotly_chart(fig3, use_container_width=True)
     st.markdown("---")
     st.subheader("Top Airports by Traffic (Map)")
-    airport_locations = {
-        'ATL': (33.6407, -84.4277), 'DFW': (32.8998, -97.0403), 'ORD': (41.9742, -87.9073),
-        'DEN': (39.8561, -104.6737), 'CLT': (35.2139, -80.9431), 'LAX': (33.9416, -118.4085),
-        'PHX': (33.4342, -112.0119), 'LAS': (36.0840, -115.1537), 'SEA': (47.4480, -122.3088),
-        'MCO': (28.4294, -81.3089), 'SFO': (37.6213, -122.3790), 'JFK': (40.6413, -73.7781)
-    }
+    # ... (Folium map code) ...
+    airport_locations = { 'ATL': (33.6407, -84.4277), 'DFW': (32.8998, -97.0403), 'ORD': (41.9742, -87.9073), 'DEN': (39.8561, -104.6737), 'CLT': (35.2139, -80.9431), 'LAX': (33.9416, -118.4085), 'PHX': (33.4342, -112.0119), 'LAS': (36.0840, -115.1537), 'SEA': (47.4480, -122.3088), 'MCO': (28.4294, -81.3089), 'SFO': (37.6213, -122.3790), 'JFK': (40.6413, -73.7781) }
     busiest_airports = df_filtered['ORIGIN'].value_counts().head(10).index
     avg_delays = df_filtered.groupby('ORIGIN')['ARR_DELAY'].mean()
     m = folium.Map(location=[39.8, -98.5], zoom_start=4)
@@ -87,16 +84,10 @@ if page == "Overview":
         if airport in airport_locations:
             lat, lon = airport_locations[airport]
             delay = avg_delays.get(airport, 0)
-            folium.CircleMarker(
-                location=[lat, lon],
-                radius=6,
-                popup=f"{airport}: {delay:.1f} min avg delay",
-                color="blue",
-                fill=True
-            ).add_to(m)
+            folium.CircleMarker(location=[lat, lon], radius=6, popup=f"{airport}: {delay:.1f} min avg delay", color="blue", fill=True).add_to(m)
     st_folium(m, width=700, height=500)
 
-# Page 2: Delays & Cancellations
+# --- Page 2: Delays & Cancellations ---
 elif page == "Delays & Cancellations":
     st.title("⏱️ Delay & Cancellation Insights")
     avg_delay = df_filtered.groupby("AIRLINE")['ARR_DELAY'].mean().reset_index()
@@ -105,29 +96,43 @@ elif page == "Delays & Cancellations":
     st.plotly_chart(fig4, use_container_width=True)
     st.markdown("---")
     
-    # Monthly Cancellation Rate
+    # ---- STYLED MATPLOTLIB LINE CHART ----
     monthly_cancel = df_filtered.groupby("Month")['CANCELLED'].mean() * 100
     fig5, ax = plt.subplots(figsize=(8,4))
-    # UPDATED: Use a modern blue color and slightly thicker line
-    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color='#1f77b4', linewidth=2)
-    ax.set_title("Monthly Cancellation Rate (%)")
-    ax.set_xlabel("Month")
-    ax.set_ylabel("Cancellation Rate %")
+    fig5.patch.set_alpha(0.0) # Transparent background for the figure
+    ax.set_facecolor('none') # Transparent background for the axes
+
+    # Use a lighter blue to match the Plotly style and add grid
+    ax.plot(monthly_cancel.index, monthly_cancel.values, marker='o', color='#a5c8e1', linewidth=2)
+    ax.grid(axis='y', linestyle='--', color='gray', alpha=0.5)
+
+    # Style the text and axes for dark theme
+    ax.set_title("Monthly Cancellation Rate (%)", color='white', fontsize=16)
+    ax.set_xlabel("Month", color='white')
+    ax.set_ylabel("Cancellation Rate %", color='white')
+    ax.tick_params(axis='x', colors='white')
+    ax.tick_params(axis='y', colors='white')
+    ax.spines['bottom'].set_color('gray')
+    ax.spines['left'].set_color('gray')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     st.pyplot(fig5)
 
-    # Cancellation Reasons
+    # ---- STYLED MATPLOTLIB PIE CHART ----
     cancelled = df_filtered[df_filtered['CANCELLED'] == 1].copy()
     reason_map = {'A': 'Carrier', 'B': 'Weather', 'C': 'NAS', 'D': 'Security'}
     cancelled['Reason'] = cancelled['CANCELLATION_CODE'].map(reason_map)
     pie_counts = cancelled['Reason'].value_counts()
     fig6, ax = plt.subplots()
-    # UPDATED: Generate a color palette from the 'Blues' colormap
-    colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.8, len(pie_counts)))
-    ax.pie(pie_counts, labels=pie_counts.index, autopct='%1.1f%%', startangle=90, colors=colors)
-    ax.set_title("Cancellation Reasons Breakdown")
+    fig6.patch.set_alpha(0.0)
+    
+    # Generate a color palette and style the text for dark theme
+    colors = plt.get_cmap('Blues_r')(np.linspace(0.4, 0.8, len(pie_counts)))
+    ax.pie(pie_counts, labels=pie_counts.index, autopct='%1.1f%%', startangle=90, colors=colors, textprops={'color':"w"})
+    ax.set_title("Cancellation Reasons Breakdown", color='white', fontsize=16)
     st.pyplot(fig6)
 
-# Page 3: Route Performance
+# --- Page 3: Route Performance ---
 elif page == "Route Performance":
     st.title("🛫 Route & Airport Performance")
     top_routes = df_filtered['Route'].value_counts().head(10).reset_index()
@@ -137,12 +142,18 @@ elif page == "Route Performance":
     st.plotly_chart(fig7, use_container_width=True)
     st.markdown("---")
     
+    # ---- STYLED SEABORN HEATMAP ----
     st.subheader("Route Delay Heatmap (Top 20 Routes)")
     top_20 = df_filtered['Route'].value_counts().head(20).index
     df_top = df_filtered[df_filtered['Route'].isin(top_20)]
     delay_matrix = df_top.pivot_table(index='ORIGIN', columns='DEST', values='ARR_DELAY', aggfunc='mean')
     fig8, ax = plt.subplots(figsize=(10,6))
-    # UPDATED: Use the 'viridis' colormap for a modern look
+    fig8.patch.set_alpha(0.0)
+    ax.set_facecolor('none')
+    
+    # Use the 'viridis' colormap and style text for dark theme
     sns.heatmap(delay_matrix, cmap='viridis', annot=True, fmt=".1f", linewidths=.5, ax=ax)
-    ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)")
+    ax.set_title("Average Arrival Delay Heatmap (Top 20 Routes)", color='white', fontsize=16)
+    ax.tick_params(axis='x', colors='white')
+    ax.tick_params(axis='y', colors='white')
     st.pyplot(fig8)
