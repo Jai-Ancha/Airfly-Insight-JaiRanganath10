@@ -15,8 +15,8 @@ st.set_page_config(page_title="AirFly Insights Dashboard", layout="wide")
 @st.cache_data
 def load_data():
     dataset_name = "anchajairanganath/flights-cleaned"
-    # This now points to your new Parquet file
-    output_file = "flights_cleaned.parquet"
+    # This points to your NEW 25% sample file
+    output_file = "flights_cleaned_sample_25pct.parquet"
 
     if not os.path.exists(output_file):
         api = KaggleApi()
@@ -24,10 +24,10 @@ def load_data():
         
         api.dataset_download_files(dataset_name, path=".", unzip=True)
 
-    # This now uses the correct function to read the Parquet file
+    # Reads the efficient Parquet file
     df = pd.read_parquet(output_file) 
     
-    # The rest of your data processing is the same
+    # The rest of your code stays exactly the same
     df["FL_DATE"] = pd.to_datetime(df["FL_DATE"], errors='coerce')
     df["Year"] = df["FL_DATE"].dt.year
     df["Month"] = df["FL_DATE"].dt.month
@@ -38,6 +38,7 @@ def load_data():
 
 df = load_data()
 
+# --- All the rest of your dashboard code is the same ---
 # Sidebar
 st.sidebar.title("AirFly Dashboard")
 airlines = st.sidebar.multiselect("Airline", sorted(df['AIRLINE'].unique()))
